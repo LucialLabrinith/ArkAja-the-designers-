@@ -12,10 +12,34 @@ export const Hero: React.FC<HeroProps> = ({ onExploreWork, onStartProject }) => 
   const { getImageForSlot } = useImageStorage();
 
   const heroSlots = [
-    { id: 'lumiere-1', sector: 'SECTOR 01', title: 'LUMIÈRE BEAUTY', sub: 'Aesthetic & Skincare' },
-    { id: 'saree-1', sector: 'SECTOR 02', title: 'SAREE COLLECTIONS', sub: 'Heritage Silk & Handloom' },
-    { id: 'elan-1', sector: 'SECTOR 03', title: 'ÉLAN FASHION', sub: 'Contemporary Womenswear' },
-    { id: 'noir-1', sector: 'SECTOR 04', title: 'NOIR & BEAN', sub: 'Artisanal Coffee & Brunch' },
+    {
+      id: 'lumiere-1',
+      sector: 'SECTOR 01',
+      title: 'LUMIÈRE BEAUTY',
+      sub: 'Aesthetic & Skincare',
+      defaultImg: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=600&q=85'
+    },
+    {
+      id: 'saree-1',
+      sector: 'SECTOR 02',
+      title: 'SAREE COLLECTIONS',
+      sub: 'Heritage Silk & Handloom',
+      defaultImg: '/images/saree_left.png'
+    },
+    {
+      id: 'elan-1',
+      sector: 'SECTOR 03',
+      title: 'ÉLAN FASHION',
+      sub: 'Contemporary Womenswear',
+      defaultImg: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=600&q=85'
+    },
+    {
+      id: 'noir-1',
+      sector: 'SECTOR 04',
+      title: 'NOIR & BEAN',
+      sub: 'Artisanal Coffee & Brunch',
+      defaultImg: 'https://images.unsplash.com/photo-1517256064527-09c73fc73e38?auto=format&fit=crop&w=600&q=85'
+    },
   ];
   return (
     <section className="relative pt-28 sm:pt-36 pb-14 sm:pb-20 bg-[#F7F5EF] text-[#141312] overflow-hidden border-b border-[#E5E0D8]">
@@ -90,7 +114,7 @@ export const Hero: React.FC<HeroProps> = ({ onExploreWork, onStartProject }) => 
             {/* Quick 4-card discipline showcase or custom uploaded artwork */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 max-w-4xl mx-auto cursor-pointer" onClick={onExploreWork}>
               {heroSlots.map((slot) => {
-                const img = getImageForSlot(slot.id);
+                const img = getImageForSlot(slot.id) || slot.defaultImg;
                 return (
                   <div
                     key={slot.id}

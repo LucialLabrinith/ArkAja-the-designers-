@@ -72,13 +72,8 @@ export const DigitalPosterCard: React.FC<DigitalPosterCardProps> = ({
           </div>
 
           {/* Scalloped Postage Stamp Photo Frame */}
-          <div className="relative w-40 sm:w-44 h-48 bg-white p-2 shadow-lg border-2 border-dashed border-[#8A2B3A]/40 flex flex-col items-center justify-center text-center">
-            <div className="w-full h-full bg-[#FAF6EE] border border-[#E0D5C3] p-2 flex flex-col items-center justify-center">
-              <span className="text-xs font-serif font-bold text-[#8A2B3A]">ROYAL HERITAGE</span>
-              <div className="w-10 h-0.5 bg-[#B38F5B] my-2" />
-              <p className="text-[10px] text-[#4A4540] italic font-serif">Dual Regal Weaves</p>
-              <span className="text-[9px] text-[#8A2B3A] mt-2 font-mono uppercase">Silk &amp; Zari</span>
-            </div>
+          <div className="relative w-40 sm:w-44 h-48 bg-white p-2 shadow-lg border-2 border-dashed border-[#8A2B3A]/40 flex flex-col items-center justify-center text-center overflow-hidden">
+            <img src="/images/saree_right.png" alt="The Birla Sarees" className="w-full h-full object-cover" />
           </div>
 
           {/* Right Vertical Banner */}
@@ -117,16 +112,18 @@ export const DigitalPosterCard: React.FC<DigitalPosterCardProps> = ({
         <div className="relative z-10 my-auto grid grid-cols-2 gap-3 px-2">
           {/* Left Frame: Brocade Silk */}
           <div className="aspect-[3/4] bg-[#5C0D1B] border-2 border-[#1E1B18] shadow-md p-3 flex flex-col justify-end text-white relative overflow-hidden">
-            <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#D4AF37_1px,transparent_1px)] [background-size:8px_8px]" />
-            <span className="text-[9px] font-mono text-[#D4AF37] uppercase tracking-wider">PURE SILK</span>
-            <span className="text-xs font-serif font-bold text-white">Gold Zari Jaal</span>
+            <img src="/images/saree_left.png" alt="Pure Silk Zari" className="absolute inset-0 w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent pointer-events-none" />
+            <span className="relative z-10 text-[9px] font-mono text-[#D4AF37] uppercase tracking-wider">PURE SILK</span>
+            <span className="relative z-10 text-xs font-serif font-bold text-white">Gold Zari Jaal</span>
           </div>
 
           {/* Right Frame: Peacock Blue Saree */}
           <div className="aspect-[3/4] bg-[#0E3A42] border-2 border-[#1E1B18] shadow-md p-3 flex flex-col justify-end text-white relative overflow-hidden">
-            <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#D4AF37_1px,transparent_1px)] [background-size:8px_8px]" />
-            <span className="text-[9px] font-mono text-[#D4AF37] uppercase tracking-wider">PEACOCK BLUE</span>
-            <span className="text-xs font-serif font-bold text-white">Temple Arch Drape</span>
+            <img src="/images/saree_right.png" alt="Peacock Blue Saree" className="absolute inset-0 w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent pointer-events-none" />
+            <span className="relative z-10 text-[9px] font-mono text-[#D4AF37] uppercase tracking-wider">PEACOCK BLUE</span>
+            <span className="relative z-10 text-xs font-serif font-bold text-white">Temple Arch Drape</span>
           </div>
         </div>
 
