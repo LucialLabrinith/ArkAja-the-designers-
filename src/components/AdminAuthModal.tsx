@@ -401,7 +401,46 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
                           </div>
                         )}
 
-                        {enq.details && (
+                        {/* Customized Numbers of Deliverables (From Enquiry Page) */}
+                        {enq.deliverablesCounts && (
+                          <div className="bg-[#141312] p-2.5 rounded-lg border border-[#2E2A25]">
+                            <span className="text-[10px] font-mono text-[#D4B98C] uppercase tracking-wider block mb-1">
+                              Customized Deliverable Numbers:
+                            </span>
+                            <div className="grid grid-cols-2 gap-2 text-[11px] text-white/90">
+                              <div className="flex justify-between border-b border-[#2E2A25] pb-1">
+                                <span className="text-[#A7A19A]">High-impact social posts:</span>
+                                <span className="font-mono font-bold text-[#D4B98C]">{enq.deliverablesCounts.highImpactSocialPosts}</span>
+                              </div>
+                              <div className="flex justify-between border-b border-[#2E2A25] pb-1">
+                                <span className="text-[#A7A19A]">Editorial story frames:</span>
+                                <span className="font-mono font-bold text-[#D4B98C]">{enq.deliverablesCounts.editorialStoryFrames}</span>
+                              </div>
+                              <div className="flex justify-between border-b border-[#2E2A25] pb-1">
+                                <span className="text-[#A7A19A]">Promo creative w/ offer:</span>
+                                <span className="font-mono font-bold text-[#D4B98C]">{enq.deliverablesCounts.promotionalCreatives}</span>
+                              </div>
+                              <div className="flex justify-between border-b border-[#2E2A25] pb-1">
+                                <span className="text-[#A7A19A]">Short-form visual assets:</span>
+                                <span className="font-mono font-bold text-[#D4B98C]">{enq.deliverablesCounts.shortFormVisualAssets}</span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Specific Personal Details / Special Requests (Deployer Only) */}
+                        {enq.personalSpecificDetails && (
+                          <div className="bg-[#241F1A] p-2.5 rounded-lg border border-[#8F6F3A]/40">
+                            <span className="text-[10px] font-mono text-[#D4B98C] uppercase tracking-wider block mb-1">
+                              Specific Personal Details &amp; Custom Requirements (Private to Deployer):
+                            </span>
+                            <p className="text-[#FAF7F2] text-[11px] whitespace-pre-wrap">
+                              {enq.personalSpecificDetails}
+                            </p>
+                          </div>
+                        )}
+
+                        {enq.details && !enq.personalSpecificDetails && (
                           <div>
                             <span className="text-[10px] text-[#66605B] uppercase block">Project Brief</span>
                             <p className="text-[#FAF7F2] bg-[#141312] p-2.5 rounded-lg border border-[#2E2A25] mt-1 whitespace-pre-wrap">

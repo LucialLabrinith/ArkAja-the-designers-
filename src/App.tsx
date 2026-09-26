@@ -17,6 +17,7 @@ import { ServicesSection } from './components/ServicesSection';
 import { WhySection } from './components/WhySection';
 import { ProcessSection } from './components/ProcessSection';
 import { PricingSection } from './components/PricingSection';
+import { EnquirySection } from './components/EnquirySection';
 import { AboutSection } from './components/AboutSection';
 import { FinalCtaSection } from './components/FinalCtaSection';
 import { Footer } from './components/Footer';
@@ -122,7 +123,10 @@ export default function App() {
           onSelectPackage={(pkg) => handleStartProject(pkg)}
         />
 
-        {/* 8. About The Studio: Concise & Authentic */}
+        {/* 8. Dedicated Service Enquiry & AI Help Centre */}
+        <EnquirySection />
+
+        {/* 9. About The Studio: Concise & Authentic */}
         <AboutSection />
 
         {/* 9. Final Closing CTA */}

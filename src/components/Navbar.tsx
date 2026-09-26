@@ -32,8 +32,9 @@ export const Navbar: React.FC<NavbarProps> = ({
     { label: 'WORK', id: 'work' },
     { label: 'SERVICES', id: 'services' },
     { label: 'PROCESS', id: 'process' },
-    { label: 'ABOUT', id: 'about' },
-    { label: 'PRICING', id: 'pricing' }
+    { label: 'PRICING', id: 'pricing' },
+    { label: 'ENQUIRY', id: 'enquiry' },
+    { label: 'ABOUT', id: 'about' }
   ];
 
   const handleNavClick = (id: string) => {

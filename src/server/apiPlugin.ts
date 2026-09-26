@@ -147,6 +147,76 @@ export function studioApiPlugin(): Plugin {
           return;
         }
 
+        // 5. AI-Generated Help Centre Assistant Endpoint (Powered by Gemini 3.8 Flash)
+        if (url === '/api/help/chat' && req.method === 'POST') {
+          let body = '';
+          req.on('data', (chunk) => { body += chunk; });
+          req.on('end', async () => {
+            try {
+              const { message } = JSON.parse(body);
+              if (!message || typeof message !== 'string') {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Invalid message' }));
+                return;
+              }
+
+              let aiReply = '';
+              try {
+                const { GoogleGenAI } = await import('@google/genai');
+                const ai = new GoogleGenAI();
+                const systemPrompt = `You are the official ArkAja Studio Help Centre AI assistant.
+ArkAja Studio creates luxury editorial visual designs, social post campaigns, story frames, promotional creatives, and short-form visual assets for beauty, fashion, apparel, and boutique hospitality brands.
+Studio Gmail: arkajastudio@gmail.com
+Deliverable Offerings & Production Highlights:
+• High-impact social posts (curated art direction & color grading)
+• Editorial story frames (9:16 vertical storytelling)
+• Promotional creatives with offer (high-converting campaign posters)
+• Short-form visual assets / reel covers (editorial hook visuals)
+Production Highlights:
+• Curated art direction & color grading
+• Exported in high-resolution ready for publish
+• Standard 3–4 business days delivery (with 48h priority options)
+• 1 round of revision included
+Customization:
+Clients can customize the exact quantity of each deliverable and specify personal details or brand requirements.
+Submitting an enquiry does not require an upfront payment; the studio director personally reviews every brief and follows up via email (arkajastudio@gmail.com).
+Provide warm, concise, professional answers (2 to 4 sentences). Keep tone elevated, helpful, and direct.`;
+
+                const response = await ai.models.generateContent({
+                  model: 'gemini-3.8-flash',
+                  contents: `${systemPrompt}\n\nClient Question: ${message}\nAnswer:`
+                });
+                aiReply = response.text || '';
+              } catch (geminiErr: any) {
+                console.warn('Gemini API call failed, using intelligent fallback:', geminiErr?.message);
+              }
+
+              // Fallback answers if Gemini is unavailable
+              if (!aiReply) {
+                const lower = message.toLowerCase();
+                if (lower.includes('custom') || lower.includes('number') || lower.includes('quantity')) {
+                  aiReply = "Yes! You can completely customize the exact number of high-impact social posts, editorial story frames, promotional creatives, and short-form visual assets on our Enquiry Page. You can also specify any bespoke requirements.";
+                } else if (lower.includes('delivery') || lower.includes('turnaround') || lower.includes('time') || lower.includes('days')) {
+                  aiReply = "Our standard production turnaround is 3–4 business days with curated art direction, color grading, and high-resolution exports. Expedited 48-hour delivery is also available upon request.";
+                } else if (lower.includes('price') || lower.includes('cost') || lower.includes('budget') || lower.includes('parcel')) {
+                  aiReply = "Our packages range from Starter ($49 / £39 / ₹2,499) to Signature ($99 / £79 / ₹4,999), and our Custom Parcel lets you pick deliverables modularly with itemized rates. Submitting an enquiry is completely free with no payment required.";
+                } else if (lower.includes('email') || lower.includes('contact') || lower.includes('gmail') || lower.includes('reach')) {
+                  aiReply = "You can reach us directly at arkajastudio@gmail.com. Clicking our email on the Enquiry page will open your email client with your project details pre-filled.";
+                } else {
+                  aiReply = "ArkAja Studio provides bespoke editorial campaigns, social posts, story frames, and launch creatives. Feel free to customize your parcel deliverables on our Enquiry page or email us directly at arkajastudio@gmail.com.";
+                }
+              }
+
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ success: true, reply: aiReply }));
+            } catch (err: any) {
+              res.writeHead(500, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ success: false, error: err.message }));
+            }
+          });
+          return;
+        }
+
         next();
       });
     }

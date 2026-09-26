@@ -568,11 +568,11 @@ export const ProjectBookingModal: React.FC<ProjectBookingModalProps> = ({
 
             <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
               <a
-                href={`mailto:divyaam2008@gmail.com?subject=ArkAja Studio Project Enquiry - ${formData.businessName}&body=Hi ArkAja Studio,%0D%0A%0D%0AI just submitted an enquiry for ${formData.businessName} (${formData.businessCategory}).%0D%0A%0D%0APackage: ${currentPlan.name}%0D%0AEstimate: ${formatPlanPrice()}%0D%0A%0D%0ANotes: ${encodeURIComponent(formData.details)}`}
+                href={`mailto:arkajastudio@gmail.com?subject=ArkAja Studio Project Enquiry - ${formData.businessName}&body=Hi ArkAja Studio,%0D%0A%0D%0AI just submitted an enquiry for ${formData.businessName} (${formData.businessCategory}).%0D%0A%0D%0APackage: ${currentPlan.name}%0D%0AEstimate: ${formatPlanPrice()}%0D%0A%0D%0ANotes: ${encodeURIComponent(formData.details)}`}
                 className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-[#8F6F3A] text-[#8F6F3A] hover:bg-[#8F6F3A] hover:text-white transition-all text-xs font-semibold uppercase tracking-wider flex items-center justify-center gap-1.5"
               >
                 <Mail size={13} />
-                <span>Send Copy via Email</span>
+                <span>Message on Gmail (arkajastudio@gmail.com)</span>
               </a>
 
               <button

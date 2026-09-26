@@ -46,17 +46,24 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onStartProject, onOp
             PRICING
           </button>
           <button
+            onClick={() => onNavigate('enquiry')}
+            className="hover:text-[#141312] hover:underline underline-offset-4 decoration-[#B38F5B] transition-colors"
+          >
+            ENQUIRY
+          </button>
+          <button
             onClick={() => onNavigate('about')}
             className="hover:text-[#141312] hover:underline underline-offset-4 decoration-[#B38F5B] transition-colors"
           >
             ABOUT
           </button>
-          <button
-            onClick={onStartProject}
+          <a
+            href="mailto:arkajastudio@gmail.com?subject=ArkAja%20Studio%20Inquiry"
             className="text-[#8F6F3A] font-bold hover:underline"
+            title="Email arkajastudio@gmail.com"
           >
-            START A PROJECT
-          </button>
+            arkajastudio@gmail.com
+          </a>
         </div>
       </div>
 
