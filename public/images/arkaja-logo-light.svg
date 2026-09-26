@@ -1,0 +1,25 @@
+<svg viewBox="0 0 340 70" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="arkajaGoldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F5E6CA" />
+      <stop offset="50%" stop-color="#D4B98C" />
+      <stop offset="100%" stop-color="#9C7E52" />
+    </linearGradient>
+    <linearGradient id="arkajaGoldLight" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFF2DC" />
+      <stop offset="100%" stop-color="#C4A36E" />
+    </linearGradient>
+  </defs>
+  <!-- Monogram Mark -->
+  <g transform="translate(5, 5) scale(0.6)">
+    <polygon points="50,10 56,10 32,84 24,84" fill="url(#arkajaGoldGrad)" />
+    <polygon points="50,10 44,10 68,84 76,84" fill="url(#arkajaGoldGrad)" />
+    <polygon points="31,58 69,58 67,64 33,64" fill="url(#arkajaGoldLight)" />
+    <polygon points="20,26 27,26 50,78 44,78" fill="url(#arkajaGoldGrad)" opacity="0.95" />
+    <polygon points="80,26 73,26 50,78 56,78" fill="url(#arkajaGoldGrad)" opacity="0.95" />
+    <polygon points="35,36 65,36 67,41 33,41" fill="url(#arkajaGoldLight)" opacity="0.85" />
+  </g>
+  <!-- Brand Text -->
+  <text x="80" y="38" fill="#F7F5EF" font-family="'Cinzel', 'Playfair Display', Georgia, serif" font-size="24" font-weight="700" letter-spacing="4">ARKAJA</text>
+  <text x="82" y="54" fill="#D4B98C" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="9" font-weight="600" letter-spacing="4">STUDIO • CREATIVE</text>
+</svg>

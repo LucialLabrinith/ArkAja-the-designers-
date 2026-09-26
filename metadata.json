@@ -1,0 +1,6 @@
+{
+  "name": "ArkAja Studio",
+  "description": "ArkAja Studio creates premium social content and campaign visuals for brands. AI-assisted creative production with human-led art direction.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
