@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ProjectVisualItem } from '../types';
 import { Maximize2 } from 'lucide-react';
 import { useImageStorage } from '../context/ImageStorageContext';
@@ -24,16 +24,22 @@ export const ProjectVisual: React.FC<ProjectVisualProps> = ({
   const [hasError, setHasError] = useState(false);
   const { getImageForSlot } = useImageStorage();
 
-  // Custom user uploaded image from IndexedDB takes top priority, then explicit imageSrc
+  // Custom user uploaded image from storage takes top priority, then explicit imageSrc
   const customUploaded = getImageForSlot(item.id);
   const activeImage = customUploaded || item.imageSrc || '';
+
+  // Reset loading and error states whenever the image source switches
+  useEffect(() => {
+    setImageLoaded(false);
+    setHasError(false);
+  }, [activeImage]);
 
   return (
     <div
       className={`relative w-full h-full overflow-hidden bg-[#181715] group ${className}`}
       style={{ backgroundColor: item.themeBg || '#181715' }}
     >
-      {/* 1. If an image exists and has not errored, render the real photo */}
+      {/* 1. If an image exists and has not errored, render the photo */}
       {activeImage && !hasError ? (
         <>
           {!imageLoaded && (
@@ -42,6 +48,7 @@ export const ProjectVisual: React.FC<ProjectVisualProps> = ({
             </div>
           )}
           <img
+            key={activeImage}
             src={activeImage}
             alt={item.title}
             loading="lazy"

@@ -7,6 +7,9 @@ interface ImageStorageContextType {
   removeImageForSlot: (slotId: string) => Promise<void>;
   clearAllCustomImages: () => Promise<void>;
   getImageForSlot: (slotId: string) => string | undefined;
+  syncToServer: (adminPassword?: string) => Promise<{ success: boolean; count?: number; error?: string }>;
+  exportBackup: () => void;
+  importBackup: (jsonContent: string) => Promise<boolean>;
   isReady: boolean;
 }
 
@@ -44,46 +47,89 @@ function fileToDataUrl(file: File): Promise<string> {
 }
 
 export const ImageStorageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [customImages, setCustomImages] = useState<Record<string, string>>({});
+  // Synchronously initialize from localStorage so images appear on the very first frame!
+  const [customImages, setCustomImages] = useState<Record<string, string>>(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem('arkaja_custom_images');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed && typeof parsed === 'object') return parsed;
+        }
+      }
+    } catch {}
+    return {};
+  });
+
   const [isReady, setIsReady] = useState(false);
 
-  // Load saved images from IndexedDB on startup
+  // Load saved images from:
+  // 1. Static custom-manifest.json (works on static deployments like Vercel)
+  // 2. localStorage
+  // 3. IndexedDB
   useEffect(() => {
     let isMounted = true;
+
     async function loadAll() {
+      const merged: Record<string, string> = {};
+
+      // 1. Check if a static manifest exists in public/images/custom-manifest.json
+      try {
+        const res = await fetch('/images/custom-manifest.json');
+        if (res.ok) {
+          const manifest = await res.json();
+          if (manifest && typeof manifest === 'object') {
+            Object.assign(merged, manifest);
+          }
+        }
+      } catch {}
+
+      // 2. Check localStorage
+      try {
+        const local = localStorage.getItem('arkaja_custom_images');
+        if (local) {
+          const parsed = JSON.parse(local);
+          if (parsed && typeof parsed === 'object') {
+            Object.assign(merged, parsed);
+          }
+        }
+      } catch {}
+
+      // 3. Check IndexedDB
       try {
         const db = await openDB();
         const tx = db.transaction(STORE_NAME, 'readonly');
         const store = tx.objectStore(STORE_NAME);
         const req = store.openCursor();
-        const loaded: Record<string, string> = {};
 
-        req.onsuccess = (e) => {
-          const cursor = (e.target as IDBRequest).result as IDBCursorWithValue;
-          if (cursor) {
-            loaded[cursor.key as string] = cursor.value;
-            cursor.continue();
-          } else {
-            if (isMounted) {
-              setCustomImages(loaded);
-              setIsReady(true);
+        await new Promise<void>((resolve) => {
+          req.onsuccess = (e) => {
+            const cursor = (e.target as IDBRequest).result as IDBCursorWithValue;
+            if (cursor) {
+              if (cursor.value) {
+                merged[cursor.key as string] = cursor.value;
+              }
+              cursor.continue();
+            } else {
+              resolve();
             }
-          }
-        };
-        req.onerror = () => {
-          if (isMounted) setIsReady(true);
-        };
+          };
+          req.onerror = () => resolve();
+        });
       } catch (err) {
-        console.warn('Could not load from IndexedDB, falling back to localStorage:', err);
-        try {
-          const fallback = localStorage.getItem('arkaja_custom_images');
-          if (fallback && isMounted) {
-            setCustomImages(JSON.parse(fallback));
-          }
-        } catch {
-          // ignore
-        }
-        if (isMounted) setIsReady(true);
+        console.warn('IndexedDB cursor read completed or skipped:', err);
+      }
+
+      if (isMounted) {
+        setCustomImages((prev) => {
+          const combined = { ...prev, ...merged };
+          // Keep localStorage up to date
+          try {
+            localStorage.setItem('arkaja_custom_images', JSON.stringify(combined));
+          } catch {}
+          return combined;
+        });
+        setIsReady(true);
       }
     }
 
@@ -93,32 +139,46 @@ export const ImageStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
     };
   }, []);
 
+  const persistToStorages = async (nextImages: Record<string, string>, slotId?: string, dataUrl?: string) => {
+    // 1. LocalStorage
+    try {
+      localStorage.setItem('arkaja_custom_images', JSON.stringify(nextImages));
+    } catch (err) {
+      console.warn('LocalStorage save failed:', err);
+    }
+
+    // 2. IndexedDB
+    try {
+      const db = await openDB();
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+      if (slotId && dataUrl) {
+        store.put(dataUrl, slotId);
+      } else {
+        for (const [key, val] of Object.entries(nextImages)) {
+          store.put(val, key);
+        }
+      }
+      await new Promise<void>((resolve, reject) => {
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      });
+    } catch (err) {
+      console.warn('IndexedDB save failed:', err);
+    }
+  };
+
   const setImageForSlot = async (slotId: string, fileOrDataUrl: File | string, adminPassword = 'jamessu') => {
     const dataUrl =
       typeof fileOrDataUrl === 'string'
         ? fileOrDataUrl
         : await fileToDataUrl(fileOrDataUrl);
 
-    // Save to IndexedDB
-    try {
-      const db = await openDB();
-      const tx = db.transaction(STORE_NAME, 'readwrite');
-      tx.objectStore(STORE_NAME).put(dataUrl, slotId);
-      await new Promise<void>((resolve, reject) => {
-        tx.oncomplete = () => resolve();
-        tx.onerror = () => reject(tx.error);
-      });
-    } catch (err) {
-      console.warn('IndexedDB write failed, using localStorage:', err);
-      try {
-        const next = { ...customImages, [slotId]: dataUrl };
-        localStorage.setItem('arkaja_custom_images', JSON.stringify(next));
-      } catch {
-        // storage quota
-      }
-    }
+    const next = { ...customImages, [slotId]: dataUrl };
+    setCustomImages(next);
+    await persistToStorages(next, slotId, dataUrl);
 
-    // Also persist directly to server disk via /api/upload
+    // Also persist directly to server disk if dev server is running
     try {
       await fetch('/api/upload', {
         method: 'POST',
@@ -129,14 +189,7 @@ export const ImageStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
           dataUrl
         })
       });
-    } catch (err) {
-      console.warn('Server upload failed, cached in browser:', err);
-    }
-
-    setCustomImages((prev) => ({
-      ...prev,
-      [slotId]: dataUrl
-    }));
+    } catch {}
   };
 
   const setMultipleImages = async (slots: Record<string, File | string>, adminPassword = 'jamessu') => {
@@ -145,43 +198,21 @@ export const ImageStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
       processed[key] = typeof val === 'string' ? val : await fileToDataUrl(val);
     }
 
-    // Save batch to IndexedDB
+    const next = { ...customImages, ...processed };
+    setCustomImages(next);
+    await persistToStorages(next);
+
+    // Sync to server disk
     try {
-      const db = await openDB();
-      const tx = db.transaction(STORE_NAME, 'readwrite');
-      const store = tx.objectStore(STORE_NAME);
-      for (const [key, val] of Object.entries(processed)) {
-        store.put(val, key);
-      }
-      await new Promise<void>((resolve, reject) => {
-        tx.oncomplete = () => resolve();
-        tx.onerror = () => reject(tx.error);
+      await fetch('/api/sync-uploaded-images', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          password: adminPassword,
+          images: processed
+        })
       });
-    } catch (err) {
-      console.warn('Batch write failed:', err);
-    }
-
-    // Persist batch to server
-    for (const [slotId, dataUrl] of Object.entries(processed)) {
-      try {
-        await fetch('/api/upload', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            password: adminPassword,
-            slotId,
-            dataUrl
-          })
-        });
-      } catch (err) {
-        // continue
-      }
-    }
-
-    setCustomImages((prev) => ({
-      ...prev,
-      ...processed
-    }));
+    } catch {}
   };
 
   const removeImageForSlot = async (slotId: string) => {
@@ -189,12 +220,14 @@ export const ImageStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
       const db = await openDB();
       const tx = db.transaction(STORE_NAME, 'readwrite');
       tx.objectStore(STORE_NAME).delete(slotId);
-    } catch {
-      // ignore
-    }
+    } catch {}
+
     setCustomImages((prev) => {
       const next = { ...prev };
       delete next[slotId];
+      try {
+        localStorage.setItem('arkaja_custom_images', JSON.stringify(next));
+      } catch {}
       return next;
     });
   };
@@ -204,19 +237,84 @@ export const ImageStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
       const db = await openDB();
       const tx = db.transaction(STORE_NAME, 'readwrite');
       tx.objectStore(STORE_NAME).clear();
-    } catch {
-      // ignore
-    }
+    } catch {}
     try {
       localStorage.removeItem('arkaja_custom_images');
-    } catch {
-      // ignore
-    }
+    } catch {}
     setCustomImages({});
   };
 
+  // Sync all currently loaded images from browser directly to server's public/images/
+  const syncToServer = async (adminPassword = 'jamessu') => {
+    if (Object.keys(customImages).length === 0) {
+      return { success: false, error: 'No custom uploaded images found in browser storage.' };
+    }
+
+    try {
+      const res = await fetch('/api/sync-uploaded-images', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          password: adminPassword,
+          images: customImages
+        })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        return { success: true, count: data.savedCount || Object.keys(customImages).length };
+      } else {
+        return { success: false, error: 'Server responded with error status: ' + res.status };
+      }
+    } catch (err: any) {
+      return { success: false, error: err?.message || 'Could not connect to server' };
+    }
+  };
+
+  // Export full backup as downloadable JSON file
+  const exportBackup = () => {
+    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(customImages, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute('href', dataStr);
+    downloadAnchor.setAttribute('download', `arkaja-artwork-backup-${new Date().toISOString().slice(0, 10)}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+  };
+
+  // Import JSON backup into browser storage
+  const importBackup = async (jsonContent: string): Promise<boolean> => {
+    try {
+      const parsed = JSON.parse(jsonContent);
+      if (parsed && typeof parsed === 'object') {
+        const next = { ...customImages, ...parsed };
+        setCustomImages(next);
+        await persistToStorages(next);
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  };
+
   const getImageForSlot = (slotId: string): string | undefined => {
-    return customImages[slotId];
+    if (customImages[slotId]) return customImages[slotId];
+
+    // Alias mapping for flexibility
+    if (slotId === 'lumiere-1' && customImages['lumiere']) return customImages['lumiere'];
+    if (slotId === 'elan-1' && customImages['elan']) return customImages['elan'];
+    if (slotId === 'noir-1' && (customImages['noir'] || customImages['noir-and-bean'])) {
+      return customImages['noir'] || customImages['noir-and-bean'];
+    }
+    if (slotId === 'saree-1' && (customImages['saree'] || customImages['saree-edit'])) {
+      return customImages['saree'] || customImages['saree-edit'];
+    }
+    if (slotId === 'muse-1' && (customImages['muse'] || customImages['muse-beauty-london'])) {
+      return customImages['muse'] || customImages['muse-beauty-london'];
+    }
+
+    return undefined;
   };
 
   return (
@@ -228,6 +326,9 @@ export const ImageStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
         removeImageForSlot,
         clearAllCustomImages,
         getImageForSlot,
+        syncToServer,
+        exportBackup,
+        importBackup,
         isReady
       }}
     >

@@ -6,9 +6,9 @@ export function studioApiPlugin(): Plugin {
   return {
     name: 'arkaja-studio-api-plugin',
     configureServer(server) {
-      // Ensure data and public directories exist
-      const publicImagesDir = path.resolve(__dirname, '../../public/images');
-      const dataDir = path.resolve(__dirname, '../../data');
+      // Ensure data and public directories exist reliably from project root
+      const publicImagesDir = path.resolve(process.cwd(), 'public/images');
+      const dataDir = path.resolve(process.cwd(), 'data');
       if (!fs.existsSync(publicImagesDir)) {
         fs.mkdirSync(publicImagesDir, { recursive: true });
       }
@@ -19,6 +19,11 @@ export function studioApiPlugin(): Plugin {
       const enquiriesFilePath = path.join(dataDir, 'enquiries.json');
       if (!fs.existsSync(enquiriesFilePath)) {
         fs.writeFileSync(enquiriesFilePath, '[]', 'utf-8');
+      }
+
+      const manifestFilePath = path.join(publicImagesDir, 'custom-manifest.json');
+      if (!fs.existsSync(manifestFilePath)) {
+        fs.writeFileSync(manifestFilePath, '{}', 'utf-8');
       }
 
       server.middlewares.use((req, res, next) => {
@@ -46,7 +51,7 @@ export function studioApiPlugin(): Plugin {
           return;
         }
 
-        // 2. Poster Upload Endpoint (Password Protected with 'jamessu')
+        // 2. Single Poster Upload Endpoint (Password Protected with 'jamessu')
         if (url === '/api/upload' && req.method === 'POST') {
           let body = '';
           req.on('data', (chunk) => { body += chunk; });
@@ -78,6 +83,16 @@ export function studioApiPlugin(): Plugin {
               const targetPath = path.join(publicImagesDir, `${slotId}.png`);
               fs.writeFileSync(targetPath, buffer);
 
+              // Update manifest
+              try {
+                let manifest: Record<string, string> = {};
+                if (fs.existsSync(manifestFilePath)) {
+                  manifest = JSON.parse(fs.readFileSync(manifestFilePath, 'utf-8'));
+                }
+                manifest[slotId] = `/images/${slotId}.png`;
+                fs.writeFileSync(manifestFilePath, JSON.stringify(manifest, null, 2), 'utf-8');
+              } catch {}
+
               res.writeHead(200, { 'Content-Type': 'application/json' });
               res.end(JSON.stringify({
                 success: true,
@@ -89,6 +104,79 @@ export function studioApiPlugin(): Plugin {
               res.end(JSON.stringify({ success: false, error: err.message }));
             }
           });
+          return;
+        }
+
+        // 2b. Batch Sync All Uploaded Images to public/images/
+        if (url === '/api/sync-uploaded-images' && req.method === 'POST') {
+          let body = '';
+          req.on('data', (chunk) => { body += chunk; });
+          req.on('end', () => {
+            try {
+              const payload = JSON.parse(body);
+              if (payload.password !== 'jamessu') {
+                res.writeHead(403, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ success: false, error: 'Unauthorized' }));
+                return;
+              }
+
+              const { images } = payload;
+              if (!images || typeof images !== 'object') {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ success: false, error: 'Missing images object' }));
+                return;
+              }
+
+              let manifest: Record<string, string> = {};
+              try {
+                if (fs.existsSync(manifestFilePath)) {
+                  manifest = JSON.parse(fs.readFileSync(manifestFilePath, 'utf-8'));
+                }
+              } catch {}
+
+              let savedCount = 0;
+              for (const [slotId, dataUrl] of Object.entries(images as Record<string, string>)) {
+                if (!dataUrl) continue;
+                const matches = dataUrl.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+                if (matches && matches[2]) {
+                  const buffer = Buffer.from(matches[2], 'base64');
+                  const targetPath = path.join(publicImagesDir, `${slotId}.png`);
+                  fs.writeFileSync(targetPath, buffer);
+                  manifest[slotId] = `/images/${slotId}.png`;
+                  savedCount++;
+                }
+              }
+
+              fs.writeFileSync(manifestFilePath, JSON.stringify(manifest, null, 2), 'utf-8');
+
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({
+                success: true,
+                savedCount,
+                manifest
+              }));
+            } catch (err: any) {
+              res.writeHead(500, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ success: false, error: err.message }));
+            }
+          });
+          return;
+        }
+
+        // 2c. Available Images List Endpoint
+        if (url === '/api/images/list' && req.method === 'GET') {
+          try {
+            const files = fs.existsSync(publicImagesDir) ? fs.readdirSync(publicImagesDir) : [];
+            let manifest = {};
+            if (fs.existsSync(manifestFilePath)) {
+              manifest = JSON.parse(fs.readFileSync(manifestFilePath, 'utf-8'));
+            }
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ files, manifest }));
+          } catch {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ files: [], manifest: {} }));
+          }
           return;
         }
 

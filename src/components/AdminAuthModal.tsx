@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Lock, Key, X, CheckCircle2, AlertCircle, Upload, Inbox, RefreshCw, Mail, Calendar, DollarSign } from 'lucide-react';
+import { Lock, Key, X, CheckCircle2, AlertCircle, Upload, Inbox, RefreshCw, Mail, Calendar, DollarSign, Download, Save, FileJson, Check, ExternalLink } from 'lucide-react';
 import { useImageStorage } from '../context/ImageStorageContext';
 import { PORTFOLIO_PROJECTS } from '../data/portfolioData';
 
@@ -21,8 +21,19 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
   const [enquiries, setEnquiries] = useState<any[]>([]);
   const [loadingEnquiries, setLoadingEnquiries] = useState(false);
   const [isProcessingUpload, setIsProcessingUpload] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<string | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
 
-  const { customImages, setImageForSlot, removeImageForSlot, clearAllCustomImages, setMultipleImages } = useImageStorage();
+  const {
+    customImages,
+    setImageForSlot,
+    removeImageForSlot,
+    clearAllCustomImages,
+    setMultipleImages,
+    syncToServer,
+    exportBackup,
+    importBackup
+  } = useImageStorage();
 
   const allSlots = PORTFOLIO_PROJECTS.flatMap((p) =>
     p.items.map((item) => ({
@@ -97,6 +108,37 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
     } finally {
       setIsProcessingUpload(false);
     }
+  };
+
+  const handleSyncToProject = async () => {
+    setIsSyncing(true);
+    setSyncStatus(null);
+    try {
+      const res = await syncToServer('jamessu');
+      if (res.success) {
+        setSyncStatus(`Successfully bundled ${res.count || Object.keys(customImages).length} images into public/images/ and custom-manifest.json! Now commit & push to GitHub so Vercel deploys with your exact images.`);
+      } else {
+        setSyncStatus(res.error || 'Server sync failed. Your images remain active in your browser.');
+      }
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const content = reader.result as string;
+      const success = await importBackup(content);
+      if (success) {
+        setSyncStatus('Backup imported successfully! All images loaded into active slots.');
+      } else {
+        setSyncStatus('Failed to import backup: invalid JSON format.');
+      }
+    };
+    reader.readAsText(file);
   };
 
   if (!isOpen) return null;
@@ -211,25 +253,83 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
             {/* TAB A: POSTER MANAGER */}
             {activeTab === 'posters' && (
               <div className="flex-1 flex flex-col overflow-hidden">
-                {/* Batch Upload Bar */}
-                <div className="p-4 rounded-xl bg-[#1C1A18] border border-[#3A342E] flex flex-col sm:flex-row items-center justify-between gap-3 mb-4 shrink-0">
-                  <div>
-                    <p className="text-sm font-semibold text-white">Batch Upload Finished Posters</p>
-                    <p className="text-xs text-[#A7A19A]">
-                      Select all 11 files together to auto-fill every slot sequentially.
-                    </p>
+                {/* Actions & Deployment Sync Bar */}
+                <div className="p-4 rounded-xl bg-[#1C1A18] border border-[#3A342E] mb-3 shrink-0">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-3">
+                    <div>
+                      <p className="text-sm font-semibold text-white flex items-center gap-2">
+                        <span>Campaign Artwork Actions</span>
+                        <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-[#D4B98C]/20 text-[#D4B98C]">
+                          {Object.keys(customImages).length} of 11 custom images active
+                        </span>
+                      </p>
+                      <p className="text-xs text-[#A7A19A] mt-0.5">
+                        Upload your artwork below, then sync to project files so Vercel deploys with your exact images.
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2 shrink-0">
+                      {/* Batch upload */}
+                      <label className="cursor-pointer px-3 py-1.5 bg-[#D4B98C] hover:bg-[#E5CCA0] text-[#141312] font-semibold text-xs tracking-wider uppercase rounded-lg transition-all flex items-center gap-1.5 shadow-sm">
+                        <Upload size={13} />
+                        <span>Batch Upload</span>
+                        <input
+                          type="file"
+                          multiple
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => handleBatchUpload(e.target.files)}
+                        />
+                      </label>
+
+                      {/* Sync to project files for Vercel deployment */}
+                      <button
+                        onClick={handleSyncToProject}
+                        disabled={isSyncing || Object.keys(customImages).length === 0}
+                        className="px-3 py-1.5 bg-emerald-600/90 hover:bg-emerald-500 disabled:opacity-40 text-white font-semibold text-xs tracking-wider uppercase rounded-lg transition-all flex items-center gap-1.5 shadow-sm"
+                        title="Writes your uploaded artwork directly into public/images/ so when you push to GitHub, Vercel gets your exact photos!"
+                      >
+                        <Save size={13} />
+                        <span>{isSyncing ? 'Saving to Project...' : 'Save to Project (For Vercel)'}</span>
+                      </button>
+
+                      {/* Export backup JSON */}
+                      <button
+                        onClick={exportBackup}
+                        disabled={Object.keys(customImages).length === 0}
+                        className="px-3 py-1.5 bg-white/10 hover:bg-white/20 disabled:opacity-30 text-white font-semibold text-xs tracking-wider uppercase rounded-lg transition-all flex items-center gap-1.5"
+                        title="Download a JSON backup of all your uploaded artwork"
+                      >
+                        <Download size={13} />
+                        <span>Export Backup</span>
+                      </button>
+
+                      {/* Import backup JSON */}
+                      <label className="cursor-pointer px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white font-semibold text-xs tracking-wider uppercase rounded-lg transition-all flex items-center gap-1.5">
+                        <FileJson size={13} />
+                        <span>Import Backup</span>
+                        <input
+                          type="file"
+                          accept=".json,application/json"
+                          className="hidden"
+                          onChange={handleImportFile}
+                        />
+                      </label>
+                    </div>
                   </div>
-                  <label className="cursor-pointer px-4 py-2 bg-[#D4B98C] hover:bg-[#E5CCA0] text-[#141312] font-semibold text-xs tracking-wider uppercase rounded-lg transition-all flex items-center gap-2 shrink-0">
-                    <Upload size={14} />
-                    <span>Select Files</span>
-                    <input
-                      type="file"
-                      multiple
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => handleBatchUpload(e.target.files)}
-                    />
-                  </label>
+
+                  {/* Status Banner */}
+                  {syncStatus && (
+                    <div className="mt-2.5 p-2.5 rounded-lg bg-[#241F1A] border border-[#D4B98C]/30 text-xs text-[#E5CCA0] flex items-start gap-2">
+                      <CheckCircle2 size={15} className="text-emerald-400 shrink-0 mt-0.5" />
+                      <span>{syncStatus}</span>
+                    </div>
+                  )}
+
+                  {/* Vercel Tip */}
+                  <div className="mt-2 pt-2 border-t border-white/5 text-[11px] text-[#8C827A] flex items-center justify-between">
+                    <span>💡 Tip: Click <strong>&quot;Save to Project&quot;</strong>, then commit &amp; push to GitHub so your Vercel site permanently renders your exact images for all visitors.</span>
+                  </div>
                 </div>
 
                 {/* 11 Slots Grid */}
