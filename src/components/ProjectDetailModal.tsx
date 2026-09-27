@@ -162,7 +162,7 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
                 >
                   <div className="relative overflow-hidden rounded-2xl border border-[#E5E0D8] bg-white shadow-xl transition-all duration-300 group-hover:border-[#B38F5B]">
                     <div className="aspect-[4/3] sm:aspect-[16/10] md:aspect-[16/9] w-full">
-                      <ProjectVisual item={item} />
+                      <ProjectVisual item={item} projectTitle={project.name} />
                     </div>
 
                     {/* Hover enlarge button overlay */}

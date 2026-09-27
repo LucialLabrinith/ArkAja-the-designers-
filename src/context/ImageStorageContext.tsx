@@ -17,7 +17,27 @@ const ImageStorageContext = createContext<ImageStorageContextType | undefined>(u
 
 const DB_NAME = 'ArkAjaStudioMediaDB';
 const STORE_NAME = 'campaign_images';
-const DB_VERSION = 1;
+export const DB_VERSION = 1;
+
+export function normalizeAssetPath(url?: string): string {
+  if (!url) return '';
+  const trimmed = url.trim();
+  if (
+    trimmed.startsWith('http://') ||
+    trimmed.startsWith('https://') ||
+    trimmed.startsWith('data:') ||
+    trimmed.startsWith('blob:')
+  ) {
+    return trimmed;
+  }
+  if (trimmed.startsWith('./')) {
+    return '/' + trimmed.slice(2);
+  }
+  if (!trimmed.startsWith('/')) {
+    return '/' + trimmed;
+  }
+  return trimmed;
+}
 
 function openDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -77,9 +97,16 @@ export const ImageStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
       try {
         const res = await fetch('/images/custom-manifest.json');
         if (res.ok) {
-          const manifest = await res.json();
-          if (manifest && typeof manifest === 'object') {
-            Object.assign(merged, manifest);
+          const contentType = res.headers.get('content-type') || '';
+          if (!contentType.includes('text/html')) {
+            const manifest = await res.json();
+            if (manifest && typeof manifest === 'object') {
+              for (const [key, val] of Object.entries(manifest)) {
+                if (typeof val === 'string' && val.trim()) {
+                  merged[key] = normalizeAssetPath(val);
+                }
+              }
+            }
           }
         }
       } catch {}
@@ -90,7 +117,11 @@ export const ImageStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
         if (local) {
           const parsed = JSON.parse(local);
           if (parsed && typeof parsed === 'object') {
-            Object.assign(merged, parsed);
+            for (const [key, val] of Object.entries(parsed)) {
+              if (typeof val === 'string' && val.trim()) {
+                merged[key] = normalizeAssetPath(val);
+              }
+            }
           }
         }
       } catch {}
@@ -299,22 +330,25 @@ export const ImageStorageProvider: React.FC<{ children: React.ReactNode }> = ({ 
   };
 
   const getImageForSlot = (slotId: string): string | undefined => {
-    if (customImages[slotId]) return customImages[slotId];
+    let resolved = customImages[slotId];
 
-    // Alias mapping for flexibility
-    if (slotId === 'lumiere-1' && customImages['lumiere']) return customImages['lumiere'];
-    if (slotId === 'elan-1' && customImages['elan']) return customImages['elan'];
-    if (slotId === 'noir-1' && (customImages['noir'] || customImages['noir-and-bean'])) {
-      return customImages['noir'] || customImages['noir-and-bean'];
-    }
-    if (slotId === 'saree-1' && (customImages['saree'] || customImages['saree-edit'])) {
-      return customImages['saree'] || customImages['saree-edit'];
-    }
-    if (slotId === 'muse-1' && (customImages['muse'] || customImages['muse-beauty-london'])) {
-      return customImages['muse'] || customImages['muse-beauty-london'];
+    // Alias mapping for flexibility across IDs, slugs, and filenames
+    if (!resolved) {
+      if (slotId === 'lumiere-1') resolved = customImages['lumiere'];
+      else if (slotId === 'lumiere') resolved = customImages['lumiere-1'];
+      else if (slotId === 'elan-1') resolved = customImages['elan'] || customImages['autumn'] || customImages['the-autumn-edit'] || customImages['autumn-edit'];
+      else if (slotId === 'elan') resolved = customImages['elan-1'] || customImages['autumn'] || customImages['the-autumn-edit'] || customImages['autumn-edit'];
+      else if (slotId === 'noir-1') resolved = customImages['noir'] || customImages['noir-and-bean'];
+      else if (slotId === 'noir' || slotId === 'noir-and-bean') resolved = customImages['noir-1'] || customImages['noir'];
+      else if (slotId === 'saree-1') resolved = customImages['saree'] || customImages['saree-edit'] || customImages['saree_left'];
+      else if (slotId === 'saree-2') resolved = customImages['saree_right'];
+      else if (slotId === 'saree' || slotId === 'saree-edit') resolved = customImages['saree-1'] || customImages['saree'];
+      else if (slotId === 'muse-1') resolved = customImages['muse'] || customImages['muse-beauty-london'];
+      else if (slotId === 'muse' || slotId === 'muse-beauty-london') resolved = customImages['muse-1'] || customImages['muse'];
     }
 
-    return undefined;
+    if (!resolved) return undefined;
+    return normalizeAssetPath(resolved);
   };
 
   return (

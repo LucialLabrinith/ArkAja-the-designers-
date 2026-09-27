@@ -118,6 +118,7 @@ export const LightboxModal: React.FC<LightboxModalProps> = ({
         <div className="w-full max-w-3xl aspect-[3/4] sm:aspect-[4/5] md:aspect-[3/4] max-h-[75vh] shadow-2xl relative rounded-xl overflow-hidden bg-black/40">
           <ProjectVisual
             item={currentItem}
+            projectTitle={projectName}
             className="h-full w-full"
             contain={true}
             showOverlayHover={false}

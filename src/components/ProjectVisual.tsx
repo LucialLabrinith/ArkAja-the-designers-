@@ -3,6 +3,7 @@ import { ProjectVisualItem } from '../types';
 import { Maximize2 } from 'lucide-react';
 import { useImageStorage } from '../context/ImageStorageContext';
 import { DigitalPosterCard } from './DigitalPosterCard';
+import { ProjectImageFallback } from './ProjectImageFallback';
 
 interface ProjectVisualProps {
   item: ProjectVisualItem;
@@ -11,6 +12,7 @@ interface ProjectVisualProps {
   contain?: boolean;
   showOverlayHover?: boolean;
   onMagnify?: () => void;
+  projectTitle?: string;
 }
 
 export const ProjectVisual: React.FC<ProjectVisualProps> = ({
@@ -18,20 +20,64 @@ export const ProjectVisual: React.FC<ProjectVisualProps> = ({
   className = '',
   contain = false,
   showOverlayHover = true,
-  onMagnify
+  onMagnify,
+  projectTitle
 }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const imgRef = React.useRef<HTMLImageElement>(null);
   const { getImageForSlot } = useImageStorage();
 
   // Custom user uploaded image from storage takes top priority, then explicit imageSrc
   const customUploaded = getImageForSlot(item.id);
   const activeImage = customUploaded || item.imageSrc || '';
 
+  // Derive prominent project title fallback if not explicitly provided
+  const resolvedProjectTitle =
+    projectTitle ||
+    (item as any).parentProject?.name ||
+    (item.id.startsWith('lumiere')
+      ? 'LUMIÈRE'
+      : item.id.startsWith('noir')
+      ? 'NOIR & BEAN'
+      : item.id.startsWith('elan')
+      ? 'ÉLAN'
+      : item.id.startsWith('saree')
+      ? 'SAREE COLLECTIONS'
+      : item.id.startsWith('muse')
+      ? 'MUSE BEAUTY LONDON'
+      : 'ARKAJA STUDIO');
+
   // Reset loading and error states whenever the image source switches
   useEffect(() => {
     setImageLoaded(false);
     setHasError(false);
+
+    if (!activeImage) return;
+
+    // Check if the image is already cached and loaded by the browser
+    if (imgRef.current && imgRef.current.complete) {
+      if (imgRef.current.naturalWidth > 0) {
+        setImageLoaded(true);
+        return;
+      }
+    }
+
+    // Safety watchdog: If an image takes longer than 2.5 seconds (network stall / blocked CDN),
+    // mark error to display graceful fallback rather than indefinite loading spinner
+    const timer = window.setTimeout(() => {
+      if (imgRef.current) {
+        if (imgRef.current.complete && imgRef.current.naturalWidth > 0) {
+          setImageLoaded(true);
+        } else {
+          setHasError(true);
+        }
+      } else {
+        setHasError(true);
+      }
+    }, 2500);
+
+    return () => clearTimeout(timer);
   }, [activeImage]);
 
   return (
@@ -39,29 +85,49 @@ export const ProjectVisual: React.FC<ProjectVisualProps> = ({
       className={`relative w-full h-full overflow-hidden bg-[#181715] group ${className}`}
       style={{ backgroundColor: item.themeBg || '#181715' }}
     >
-      {/* 1. If an image exists and has not errored, render the photo */}
+      {/* 1. If an image exists and has not errored, render the photo with digital poster as instant underlay */}
       {activeImage && !hasError ? (
-        <>
+        <div className="relative w-full h-full">
+          {/* Base poster underlay while image is decoding or loading so user never sees a blank screen */}
           {!imageLoaded && (
-            <div className="absolute inset-0 flex items-center justify-center bg-[#1A1816] z-0">
-              <div className="w-6 h-6 border-2 border-[#D4B98C] border-t-transparent rounded-full animate-spin" />
+            <div className="absolute inset-0 z-0">
+              <DigitalPosterCard item={item} />
             </div>
           )}
           <img
+            ref={imgRef}
             key={activeImage}
             src={activeImage}
             alt={item.title}
-            loading="lazy"
             decoding="async"
-            onLoad={() => setImageLoaded(true)}
-            onError={() => setHasError(true)}
-            className={`w-full h-full transition-transform duration-700 ease-out group-hover:scale-[1.03] ${
+            onLoad={() => {
+              setImageLoaded(true);
+              setHasError(false);
+            }}
+            onError={() => {
+              setHasError(true);
+              setImageLoaded(false);
+            }}
+            className={`relative z-1 w-full h-full transition-all duration-500 ease-out group-hover:scale-[1.03] ${
               contain ? 'object-contain' : 'object-cover object-center'
             } ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
           />
-        </>
+        </div>
+      ) : hasError ? (
+        /* 2. Fallback UI displaying placeholder with project title when image fails to load */
+        <ProjectImageFallback
+          projectTitle={resolvedProjectTitle}
+          itemTitle={item.title}
+          badge={item.badge || item.type}
+          headline={item.headline}
+          themeBg={item.themeBg}
+          onRetry={() => {
+            setHasError(false);
+            setImageLoaded(false);
+          }}
+        />
       ) : (
-        /* 2. Otherwise render the digital poster matching the exact user poster design */
+        /* 3. Otherwise render the digital poster matching the exact user poster design */
         <DigitalPosterCard item={item} />
       )}
 

@@ -286,7 +286,7 @@ export const PortfolioGrid: React.FC<PortfolioGridProps> = ({
                       {/* Card Artwork Frame: The visual is the primary hero */}
                       <div className="relative overflow-hidden rounded-2xl border border-[#E5E0D8] bg-white transition-all duration-300 group-hover:border-[#B38F5B] group-hover:shadow-[0_16px_36px_rgba(20,19,18,0.12)]">
                         <div className="aspect-[4/3] sm:aspect-[16/11] w-full transition-transform duration-500 ease-out group-hover:scale-[1.02]">
-                          <ProjectVisual item={coverItem} />
+                          <ProjectVisual item={coverItem} projectTitle={project.name} />
                         </div>
 
                         {/* Concept Project Badge */}
@@ -364,7 +364,7 @@ export const PortfolioGrid: React.FC<PortfolioGridProps> = ({
                     {/* Visual Card Artwork */}
                     <div className="relative overflow-hidden rounded-2xl border border-[#E5E0D8] bg-white transition-all duration-300 group-hover:border-[#B38F5B] group-hover:shadow-[0_16px_36px_rgba(20,19,18,0.12)]">
                       <div className="aspect-[4/5] w-full transition-transform duration-500 ease-out group-hover:scale-[1.02]">
-                        <ProjectVisual item={visual} />
+                        <ProjectVisual item={visual} projectTitle={visual.parentProject.name} />
                       </div>
 
                       {/* Top Deliverable Pill */}

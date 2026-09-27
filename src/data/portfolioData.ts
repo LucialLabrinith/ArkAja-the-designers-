@@ -10,9 +10,9 @@ export const PORTFOLIO_PROJECTS: Project[] = [
     label: 'CONCEPT PROJECT',
     creativeDirection: 'Luminous clinical minimalism, warm ivory tones, dewy textures, and high-conversion promotional offer layouts tailored for luxury salons & medical spas.',
     description: 'A comprehensive editorial social visual suite crafted for a luxury aesthetic and skincare salon. The system balances high-credibility clinical aesthetics with warm sensorial treatment moments and persuasive package promotion.',
-    coverImage: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=1200&q=85',
+    coverImage: '/images/lumiere-1.jpg',
     images: [
-      'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=1200&q=85',
+      '/images/lumiere-1.jpg',
       'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=1200&q=85',
       'https://images.unsplash.com/photo-1512290900672-1f02e9b093e3?auto=format&fit=crop&w=1200&q=85'
     ],
@@ -29,7 +29,7 @@ export const PORTFOLIO_PROJECTS: Project[] = [
         id: 'lumiere-1',
         title: 'Hero Editorial: Your Glow. Elevated.',
         type: 'Editorial Advertisement',
-        imageSrc: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=1200&q=85',
+        imageSrc: '/images/lumiere-1.jpg',
         headline: 'YOUR GLOW. ELEVATED.',
         subtext: 'Signature Hydrafacial • Deep cleanse • Hydrate • Renew',
         accentNote: 'BOOK YOUR GLOW',
@@ -84,9 +84,9 @@ export const PORTFOLIO_PROJECTS: Project[] = [
     label: 'CONCEPT PROJECT',
     creativeDirection: 'Rich crema tones, rustic café stone textures, warm afternoon sunlight, and appetite-inducing appetite triggers built to convert followers into footfall.',
     description: 'Designed to establish an artisanal specialty coffee bar as an essential daily ritual and weekend destination. The creative suite features afternoon craving anchors, brunch club promos, and high-energy motion covers.',
-    coverImage: 'https://images.unsplash.com/photo-1517256064527-09c73fc73e38?auto=format&fit=crop&w=1200&q=85',
+    coverImage: '/images/noir-1.jpg',
     images: [
-      'https://images.unsplash.com/photo-1517256064527-09c73fc73e38?auto=format&fit=crop&w=1200&q=85',
+      '/images/noir-1.jpg',
       'https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=1200&q=85'
     ],
     deliverables: [
@@ -102,7 +102,7 @@ export const PORTFOLIO_PROJECTS: Project[] = [
         id: 'noir-1',
         title: 'Afternoon Craving: Your 4PM Deserves This',
         type: 'Afternoon Product Shot',
-        imageSrc: 'https://images.unsplash.com/photo-1517256064527-09c73fc73e38?auto=format&fit=crop&w=1200&q=85',
+        imageSrc: '/images/noir-1.jpg',
         headline: 'YOUR 4PM DESERVES THIS.',
         subtext: 'Vanilla Cloud Latte | Available this week',
         aspectRatio: 'portrait',
@@ -141,11 +141,11 @@ export const PORTFOLIO_PROJECTS: Project[] = [
     label: 'CONCEPT PROJECT',
     creativeDirection: 'Understated Parisian and Milanese luxury, monochromatic palettes, architectural stone textures, and authoritative editorial typography.',
     description: 'A multi-part campaign suite built for a contemporary womenswear label. Focuses on elevating everyday office tailoring into covetable, high-fashion wardrobe staples through educational carousels and stop-motion style reveals.',
-    coverImage: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1200&q=85',
+    coverImage: '/images/elan-1.jpg',
     images: [
-      'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1200&q=85',
-      'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1200&q=85',
-      'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=1200&q=85'
+      '/images/elan-1.jpg',
+      '/images/elan-2.jpg',
+      '/images/elan-3.jpg'
     ],
     deliverables: [
       'The Autumn Edit Campaign (Post 1)',
@@ -160,7 +160,7 @@ export const PORTFOLIO_PROJECTS: Project[] = [
         id: 'elan-1',
         title: 'The Autumn Edit Campaign Drop',
         type: 'Campaign Launch Creative',
-        imageSrc: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1200&q=85',
+        imageSrc: '/images/elan-1.jpg',
         headline: 'THE AUTUMN EDIT',
         subtext: 'COLLECTION 02 / 2026',
         accentNote: 'SHOP THE COLLECTION →',
@@ -176,7 +176,7 @@ export const PORTFOLIO_PROJECTS: Project[] = [
         id: 'elan-2',
         title: '3 Ways To Style One Blazer',
         type: 'Carousel Guide Visual',
-        imageSrc: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1200&q=85',
+        imageSrc: '/images/elan-2.jpg',
         headline: '3 WAYS TO STYLE ONE BLAZER',
         subtext: '01 Office • 02 Dinner • 03 Weekend',
         aspectRatio: 'portrait',
@@ -191,7 +191,7 @@ export const PORTFOLIO_PROJECTS: Project[] = [
         id: 'elan-3',
         title: 'The 9–5 Look But Make It Expensive',
         type: 'OOTD Fashion Reel Cover',
-        imageSrc: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=1200&q=85',
+        imageSrc: '/images/elan-3.jpg',
         headline: 'THE 9–5 LOOK BUT MAKE IT EXPENSIVE.',
         subtext: 'Modern Suiting & Architectural Tailoring',
         aspectRatio: 'portrait',

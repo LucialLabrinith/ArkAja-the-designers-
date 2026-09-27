@@ -8,6 +8,55 @@ interface HeroProps {
   onStartProject: () => void;
 }
 
+const HeroCardItem: React.FC<{
+  slot: { id: string; sector: string; title: string; sub: string; defaultImg: string };
+}> = ({ slot }) => {
+  const { getImageForSlot } = useImageStorage();
+  const [hasError, setHasError] = React.useState(false);
+  const img = getImageForSlot(slot.id) || slot.defaultImg;
+
+  React.useEffect(() => {
+    setHasError(false);
+  }, [img]);
+
+  return (
+    <div className="relative aspect-[4/3] rounded-lg overflow-hidden border border-[#E5E0D8] bg-[#1C1A18] text-[#F7F5EF] group hover:border-[#D4B98C] transition-all shadow-sm">
+      {img && !hasError ? (
+        <>
+          <img
+            key={img}
+            src={img}
+            alt={slot.title}
+            onError={() => setHasError(true)}
+            loading="lazy"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent flex items-end p-2.5">
+            <span className="text-[10px] sm:text-xs font-editorial font-bold text-white tracking-wide">
+              {slot.title}
+            </span>
+          </div>
+        </>
+      ) : (
+        <div className="p-3.5 sm:p-4 h-full flex flex-col justify-between bg-[#181614]">
+          <span className="text-[9px] sm:text-[10px] tracking-widest uppercase text-[#D4B98C] font-mono font-semibold">
+            {slot.sector}
+          </span>
+          <div>
+            <h3 className="text-xs sm:text-sm font-editorial font-bold tracking-wide text-white">
+              {slot.title}
+            </h3>
+            <p className="text-[10px] text-[#A7A19A] mt-0.5 line-clamp-1">{slot.sub}</p>
+          </div>
+          <span className="text-[9px] text-[#D4B98C]/90 uppercase tracking-wider font-mono">
+            {slot.title.includes('SAREE') ? 'Royal Weaves →' : 'Curated Campaign →'}
+          </span>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const Hero: React.FC<HeroProps> = ({ onExploreWork, onStartProject }) => {
   const { getImageForSlot } = useImageStorage();
 
@@ -17,7 +66,7 @@ export const Hero: React.FC<HeroProps> = ({ onExploreWork, onStartProject }) => 
       sector: 'SECTOR 01',
       title: 'LUMIÈRE BEAUTY',
       sub: 'Aesthetic & Skincare',
-      defaultImg: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=600&q=85'
+      defaultImg: '/images/lumiere-1.jpg'
     },
     {
       id: 'saree-1',
@@ -31,14 +80,14 @@ export const Hero: React.FC<HeroProps> = ({ onExploreWork, onStartProject }) => 
       sector: 'SECTOR 03',
       title: 'ÉLAN FASHION',
       sub: 'Contemporary Womenswear',
-      defaultImg: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=600&q=85'
+      defaultImg: '/images/elan-1.jpg'
     },
     {
       id: 'noir-1',
       sector: 'SECTOR 04',
       title: 'NOIR & BEAN',
       sub: 'Artisanal Coffee & Brunch',
-      defaultImg: 'https://images.unsplash.com/photo-1517256064527-09c73fc73e38?auto=format&fit=crop&w=600&q=85'
+      defaultImg: '/images/noir-1.jpg'
     },
   ];
   return (
@@ -113,39 +162,9 @@ export const Hero: React.FC<HeroProps> = ({ onExploreWork, onStartProject }) => 
 
             {/* Quick 4-card discipline showcase or custom uploaded artwork */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 max-w-4xl mx-auto cursor-pointer" onClick={onExploreWork}>
-              {heroSlots.map((slot) => {
-                const img = getImageForSlot(slot.id) || slot.defaultImg;
-                return (
-                  <div
-                    key={slot.id}
-                    className="relative aspect-[4/3] rounded-lg overflow-hidden border border-[#E5E0D8] bg-[#1C1A18] text-[#F7F5EF] group hover:border-[#D4B98C] transition-all shadow-sm"
-                  >
-                    {img ? (
-                      <>
-                        <img
-                          src={img}
-                          alt={slot.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex items-end p-2.5">
-                          <span className="text-[10px] sm:text-xs font-editorial font-bold text-white tracking-wide">
-                            {slot.title}
-                          </span>
-                        </div>
-                      </>
-                    ) : (
-                      <div className="p-4 h-full flex flex-col justify-between">
-                        <span className="text-[10px] tracking-widest uppercase text-[#D4B98C] font-mono">{slot.sector}</span>
-                        <div>
-                          <h3 className="text-xs sm:text-sm font-editorial font-bold tracking-wide text-white">{slot.title}</h3>
-                          <p className="text-[10px] text-[#A7A19A]">{slot.sub}</p>
-                        </div>
-                        <span className="text-[9px] text-[#D4B98C]/80 uppercase tracking-wider font-mono">Ready for Assets →</span>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+              {heroSlots.map((slot) => (
+                <HeroCardItem key={slot.id} slot={slot} />
+              ))}
             </div>
           </div>
         </div>
